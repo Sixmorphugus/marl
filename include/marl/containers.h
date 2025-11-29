@@ -28,6 +28,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#undef min
+#undef max
+
 namespace marl {
 namespace containers {
 

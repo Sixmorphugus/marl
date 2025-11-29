@@ -31,6 +31,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <future>
 #include <thread>
 
 namespace marl {
@@ -272,6 +273,7 @@ class Scheduler {
     Allocator::unique_ptr<OSFiber> const impl;
     Worker* const worker;
     State state = State::Running;  // Guarded by Worker's work.mutex.
+    Task* currentTask = nullptr;  // Guarded by Worker's work.mutex.
   };
 
  private:
@@ -608,6 +610,46 @@ inline void schedule(Function&& f) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule");
   auto scheduler = Scheduler::get();
   scheduler->enqueue(Task(std::forward<Function>(f)));
+}
+
+// schedule_returns() schedules the function f to be asynchronously called with the
+// given arguments using the currently bound scheduler. Returns a future with the called function's result value.
+template <typename Function, typename... Args>
+inline std::future<std::result_of_t<Function>> schedule_returns(Function&& f, Args&&... args) {
+  MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
+  auto scheduler = Scheduler::get();
+
+  std::promise<std::result_of_t<Function>> promise;
+
+  scheduler->enqueue(Task([promise = std::move(promise), f = std::forward<Function>(f), args = std::forward<Args>(args)...]() mutable {
+    try {
+      promise.set_value(std::move(std::invoke(f, std::move(args)...)));
+    } catch (...) {
+      promise.set_exception(std::current_exception());
+    }
+  }));
+
+  return promise.get_future();
+}
+
+// schedule_returns() schedules the function f to be asynchronously called using the
+// currently bound scheduler. Returns a future with the called function's result value.
+template <typename Function>
+inline std::future<std::result_of_t<Function>> schedule_returns(Function&& f) {
+  MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
+  auto scheduler = Scheduler::get();
+
+  std::promise<std::result_of_t<Function>> promise;
+
+  scheduler->enqueue(Task([promise = std::move(promise), f = std::forward<Function>(f)]() mutable {
+    try {
+      promise.set_value(std::move(std::invoke(f)));
+    } catch (...) {
+      promise.set_exception(std::current_exception());
+    }
+  }));
+
+  return promise.get_future();
 }
 
 }  // namespace marl

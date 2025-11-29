@@ -17,6 +17,7 @@
 #include "marl/scheduler.h"
 
 #include "marl/debug.h"
+#include "marl/taskgroup.h"
 #include "marl/thread.h"
 #include "marl/trace.h"
 
@@ -169,6 +170,10 @@ Scheduler::~Scheduler() {
 }
 
 void Scheduler::enqueue(Task&& task) {
+  if (TaskGroup* g = task.getGroup()) {
+    g->taskStarted();
+  }
+
   if (task.is(Task::Flags::SameThread)) {
     Worker::getCurrent()->enqueue(std::move(task));
     return;
@@ -480,6 +485,10 @@ void Scheduler::Worker::suspend(
                      Fiber::State::Yielded);
   }
 
+  if (TaskGroup* g = currentFiber->currentTask->getGroup()) {
+    g->taskAboutToBeSuspended();  // taskAboutToBeResumed is called inside switchToFiber.
+  }
+
   // First wait until there's something else this worker can do.
   waitForWork();
 
@@ -709,18 +718,28 @@ void Scheduler::Worker::runUntilIdle() {
     }
 
     if (!work.tasks.empty()) {
-      work.num--;
-      auto task = containers::take(work.tasks);
+      --work.num;
+      Task task = containers::take(work.tasks);
+
+      currentFiber->currentTask = &task;
+
       work.mutex.unlock();
 
       // Run the task.
       task();
+
+      // Notify any task group the task is done.
+      if (TaskGroup* g = task.getGroup()) {
+        g->taskAboutToBeCompleted();
+      }
 
       // std::function<> can carry arguments with complex destructors.
       // Ensure these are destructed outside of the lock.
       task = Task();
 
       work.mutex.lock();
+
+      currentFiber->currentTask = nullptr;
     }
   }
 }
@@ -737,6 +756,12 @@ Scheduler::Fiber* Scheduler::Worker::createWorkerFiber() {
 }
 
 void Scheduler::Worker::switchToFiber(Fiber* to) {
+  if (to->currentTask) {
+    if (TaskGroup* g = to->currentTask->getGroup()) {
+      g->taskAboutToBeResumed();  // taskAboutToBeResumed is called inside switchToFiber.
+    }
+  }
+
   DBG_LOG("%d: SWITCH(%d -> %d)", (int)id, (int)currentFiber->id, (int)to->id);
   MARL_ASSERT(to == mainFiber.get() || idleFibers.count(to) == 0,
               "switching to idle fiber");

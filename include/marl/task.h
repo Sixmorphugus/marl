@@ -20,6 +20,9 @@
 #include <functional>
 
 namespace marl {
+class Task;
+
+class TaskGroup;
 
 // Task is a unit of work for the scheduler.
 class Task {
@@ -41,7 +44,7 @@ class Task {
   MARL_NO_EXPORT inline Task(Task&&);
   MARL_NO_EXPORT inline Task(const Function& function,
                              Flags flags = Flags::None);
-  MARL_NO_EXPORT inline Task(Function&& function, Flags flags = Flags::None);
+  MARL_NO_EXPORT inline Task(Function&& function, Flags flags = Flags::None, const std::shared_ptr<TaskGroup>& group = nullptr);
   MARL_NO_EXPORT inline Task& operator=(const Task&);
   MARL_NO_EXPORT inline Task& operator=(Task&&);
   MARL_NO_EXPORT inline Task& operator=(const Function&);
@@ -56,9 +59,13 @@ class Task {
   // is() returns true if the Task was created with the given flag.
   MARL_NO_EXPORT inline bool is(Flags flag) const;
 
- private:
+  // Returns this task's task group.
+  TaskGroup* getGroup() const;
+
+private:
   Function function;
   Flags flags = Flags::None;
+  std::shared_ptr<TaskGroup> group;
 };
 
 Task::Task() = default;
@@ -66,8 +73,8 @@ Task::Task(const Task& o) : function(o.function), flags(o.flags) {}
 Task::Task(Task&& o) : function(std::move(o.function)), flags(o.flags) {}
 Task::Task(const Function& function_, Flags flags_ /* = Flags::None */)
     : function(function_), flags(flags_) {}
-Task::Task(Function&& function_, Flags flags_ /* = Flags::None */)
-    : function(std::move(function_)), flags(flags_) {}
+Task::Task(Function&& function_, Flags flags_ /* = Flags::None */, const std::shared_ptr<TaskGroup>& group_ /*= {} */)
+    : function(std::move(function_)), flags(flags_), group(group_) {}
 Task& Task::operator=(const Task& o) {
   function = o.function;
   flags = o.flags;
@@ -100,6 +107,10 @@ void Task::operator()() const {
 bool Task::is(Flags flag) const {
   return (static_cast<int>(flags) & static_cast<int>(flag)) ==
          static_cast<int>(flag);
+}
+
+inline TaskGroup* Task::getGroup() const {
+  return group.get();
 }
 
 }  // namespace marl
