@@ -39,16 +39,20 @@ class Task {
     SameThread = 1,
   };
 
+  struct Attributes {
+    Flags flags = Flags::None;
+    std::shared_ptr<TaskGroup> group;
+  };
+
   MARL_NO_EXPORT inline Task();
   MARL_NO_EXPORT inline Task(const Task&);
-  MARL_NO_EXPORT inline Task(Task&&);
-  MARL_NO_EXPORT inline Task(const Function& function,
-                             Flags flags = Flags::None);
-  MARL_NO_EXPORT inline Task(Function&& function, Flags flags = Flags::None, const std::shared_ptr<TaskGroup>& group = nullptr);
+  MARL_NO_EXPORT inline Task(Task&&) noexcept;
+  MARL_NO_EXPORT inline Task(const Function& function, Attributes&& attributes = {});
+  MARL_NO_EXPORT inline Task(Function&& function, Attributes&& attributes = {});
   MARL_NO_EXPORT inline Task& operator=(const Task&);
-  MARL_NO_EXPORT inline Task& operator=(Task&&);
+  MARL_NO_EXPORT inline Task& operator=(Task&&) noexcept;
   MARL_NO_EXPORT inline Task& operator=(const Function&);
-  MARL_NO_EXPORT inline Task& operator=(Function&&);
+  MARL_NO_EXPORT inline Task& operator=(Function&&) noexcept;
 
   // operator bool() returns true if the Task has a valid function.
   MARL_NO_EXPORT inline operator bool() const;
@@ -62,38 +66,33 @@ class Task {
   // Returns this task's task group.
   TaskGroup* getGroup() const;
 
-private:
+ private:
   Function function;
-  Flags flags = Flags::None;
-  std::shared_ptr<TaskGroup> group;
+  Attributes attributes;
 };
 
 Task::Task() = default;
-Task::Task(const Task& o) : function(o.function), flags(o.flags) {}
-Task::Task(Task&& o) : function(std::move(o.function)), flags(o.flags) {}
-Task::Task(const Function& function_, Flags flags_ /* = Flags::None */)
-    : function(function_), flags(flags_) {}
-Task::Task(Function&& function_, Flags flags_ /* = Flags::None */, const std::shared_ptr<TaskGroup>& group_ /*= {} */)
-    : function(std::move(function_)), flags(flags_), group(group_) {}
-Task& Task::operator=(const Task& o) {
-  function = o.function;
-  flags = o.flags;
-  return *this;
-}
-Task& Task::operator=(Task&& o) {
+Task::Task(const Task& o) = default;
+Task::Task(Task&& o) noexcept : function(std::move(o.function)), attributes(std::move(o.attributes)) {}
+Task::Task(const Function& function_, Attributes&& attributes_)
+    : function(function_), attributes(std::move(attributes_)) {}
+Task::Task(Function&& function_, Attributes&& attributes_)
+    : function(std::move(function_)), attributes(std::move(attributes_)) {}
+Task& Task::operator=(const Task& o) = default;
+Task& Task::operator=(Task&& o) noexcept {
   function = std::move(o.function);
-  flags = o.flags;
+  attributes = std::move(o.attributes);
   return *this;
 }
 
 Task& Task::operator=(const Function& f) {
   function = f;
-  flags = Flags::None;
+  attributes = {};
   return *this;
 }
-Task& Task::operator=(Function&& f) {
+Task& Task::operator=(Function&& f) noexcept {
   function = std::move(f);
-  flags = Flags::None;
+  attributes = {};
   return *this;
 }
 Task::operator bool() const {
@@ -105,12 +104,11 @@ void Task::operator()() const {
 }
 
 bool Task::is(Flags flag) const {
-  return (static_cast<int>(flags) & static_cast<int>(flag)) ==
-         static_cast<int>(flag);
+  return (static_cast<int>(attributes.flags) & static_cast<int>(flag)) == static_cast<int>(flag);
 }
 
 inline TaskGroup* Task::getGroup() const {
-  return group.get();
+  return attributes.group.get();
 }
 
 }  // namespace marl

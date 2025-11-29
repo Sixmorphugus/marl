@@ -595,20 +595,19 @@ inline void schedule(Task&& t) {
 // schedule() schedules the function f to be asynchronously called with the
 // given arguments using the currently bound scheduler.
 template <typename Function, typename... Args>
-inline void schedule(Function&& f, Args&&... args) {
+inline void schedule(Function&& f, Task::Attributes&& attributes, Args&&... args) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule");
   auto scheduler = Scheduler::get();
-  scheduler->enqueue(
-      Task(std::bind(std::forward<Function>(f), std::forward<Args>(args)...)));
+  scheduler->enqueue(Task(std::bind(std::forward<Function>(f), std::forward<Args>(args)...), std::move(attributes)));
 }
 
 // schedule() schedules the function f to be asynchronously called using the
 // currently bound scheduler.
 template <typename Function>
-inline void schedule(Function&& f) {
+inline void schedule(Function&& f, Task::Attributes&& attributes = {}) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule");
   auto scheduler = Scheduler::get();
-  scheduler->enqueue(Task(std::forward<Function>(f)));
+  scheduler->enqueue(Task(std::forward<Function>(f), std::move(attributes)));
 }
 
 }  // namespace marl

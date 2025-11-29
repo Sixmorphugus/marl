@@ -414,7 +414,7 @@ void Scheduler::Worker::start() {
 void Scheduler::Worker::stop() {
   switch (mode) {
     case Mode::MultiThreaded: {
-      enqueue(Task([this] { shutdown = true; }, Task::Flags::SameThread));
+      enqueue(Task([this] { shutdown = true; }, Task::Attributes{ Task::Flags::SameThread }));
       thread.join();
       break;
     }
