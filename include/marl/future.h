@@ -114,11 +114,11 @@ inline Future<std::result_of_t<Function>> schedule_returns(Function&& f, Task::A
 // the currently bound scheduler. Returns a future with the called function's
 // result value.
 template <typename Function>
-inline Future<std::result_of_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes) {
+inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
   auto scheduler = Scheduler::get();
 
-  Promise<std::result_of_t<Function>> promise;
+  Promise<std::invoke_result_t<Function>> promise;
 
   scheduler->enqueue(Task(
       [promise = std::move(promise), f = std::forward<Function>(f)]() mutable {
