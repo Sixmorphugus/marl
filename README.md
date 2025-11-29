@@ -4,9 +4,8 @@ Marl is a hybrid thread / fiber task scheduler written in C++ 11.
 
 This fork is not for proposing changes to Marl, rather it exists so I can extend Marl with some features I have a use for personally;
 - Return values from scheduled tasks via a Future being returned from schedule that can be awaited to retrieve the value. Comes with an `Event` inside so we don't make a new synchronization primitive.
-- Add task local storage and a way for a fiber to know its task
-- Waiting on the *state* of a group of tasks (wait for all completed or all suspended or completed) rather than a counter they all act on - using a group passed to the schedule function. Groups can contain groups. Now all marl primitives (maybe `Mutex`, `WaitGroup` `Event`, `ConditionVariable`) will signal fiber suspension before waiting. We need this special "all tasks in group are suspended or completed" detection feature for our compiler to unblock its main thread and go into the "typechecked all we can" state.
-- Task `join` function that takes varargs which can be single Futures or spans of them.
+- Add a way for a fiber to know its task
+- Waiting on the *state* of a group of tasks (wait for all completed or all suspended or completed) rather than a counter they all act on - using a group passed to the schedule function. Groups can contain groups. Now all marl primitives (maybe `Mutex`, `WaitGroup` `Event`, `ConditionVariable`) will signal fiber suspension before waiting.
 
 ## About
 
