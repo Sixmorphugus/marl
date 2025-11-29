@@ -95,17 +95,19 @@ Future<T> Promise<T>::getFuture() {
 // the given arguments using the currently bound scheduler. Returns a future
 // with the called function's result value.
 template <typename Function, typename... Args>
-inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
+inline Future<std::invoke_result_t<Function>>
+schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
   auto scheduler = Scheduler::get();
 
   Promise<std::invoke_result_t<Function>> promise;
 
-  scheduler->enqueue(
-      Task([promise = std::move(promise), f = std::forward<Function>(f),
-            args = std::forward<Args>(args)...]() mutable {
+  scheduler->enqueue(Task(
+      [promise = std::move(promise), f = std::forward<Function>(f),
+       ... args = std::forward<Args>(args)]() mutable {
         promise.setValue(std::move(std::invoke(f, std::move(args)...)));
-      }, std::move(attributes)));
+      },
+      std::move(attributes)));
 
   return promise.getFuture();
 }
@@ -114,7 +116,9 @@ inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Tas
 // the currently bound scheduler. Returns a future with the called function's
 // result value.
 template <typename Function>
-inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes) {
+inline Future<std::invoke_result_t<Function>> schedule_returns(
+    Function&& f,
+    Task::Attributes&& attributes) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
   auto scheduler = Scheduler::get();
 
@@ -123,7 +127,8 @@ inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Tas
   scheduler->enqueue(Task(
       [promise = std::move(promise), f = std::forward<Function>(f)]() mutable {
         promise.setValue(std::move(std::invoke(f)));
-      }, std::move(attributes)));
+      },
+      std::move(attributes)));
 
   return promise.getFuture();
 }
