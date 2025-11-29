@@ -1,3 +1,5 @@
+**DO NOT USE THIS!! THIS IS EXPERIMENTAL FOR MY OWN PROJECTS. USE [Google's Repo](https://github.com/google/marl/) UNLESS YOU FANCY DEALING WITH THE BUGS I CREATE!**
+
 # Marl
 
 Marl is a hybrid thread / fiber task scheduler written in C++ 11.
