@@ -485,8 +485,10 @@ void Scheduler::Worker::suspend(
                      Fiber::State::Yielded);
   }
 
-  if (TaskGroup* g = currentFiber->currentTask->getGroup()) {
-    g->taskAboutToBeSuspended();  // taskAboutToBeResumed is called inside switchToFiber.
+  if (currentFiber->currentTask) {
+    if (TaskGroup* g = currentFiber->currentTask->getGroup()) {
+      g->taskAboutToBeSuspended();  // taskAboutToBeResumed is called inside switchToFiber.
+    }
   }
 
   // First wait until there's something else this worker can do.
