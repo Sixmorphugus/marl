@@ -95,11 +95,11 @@ Future<T> Promise<T>::getFuture() {
 // the given arguments using the currently bound scheduler. Returns a future
 // with the called function's result value.
 template <typename Function, typename... Args>
-inline Future<std::result_of_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
+inline Future<std::invoke_result_t<Function>> schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
   MARL_ASSERT_HAS_BOUND_SCHEDULER("marl::schedule_returns");
   auto scheduler = Scheduler::get();
 
-  Promise<std::result_of_t<Function>> promise;
+  Promise<std::invoke_result_t<Function>> promise;
 
   scheduler->enqueue(
       Task([promise = std::move(promise), f = std::forward<Function>(f),
