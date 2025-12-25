@@ -64,7 +64,7 @@ class Promise {
   Promise<T>& operator=(Promise<T>&&) = default;
   ~Promise();
 
-  void setValue(const T& value);
+  void setValue(T&& value);
 
   Future<T> getFuture();
 
@@ -90,9 +90,9 @@ Promise<T>::~Promise() {
 }
 
 template <typename T>
-void Promise<T>::setValue(const T& value) {
+void Promise<T>::setValue(T&& value) {
   MARL_ASSERT(!shared->event.isSignalled(), "Promise already signaled.");
-  shared->value = value;
+  shared->value = std::move(value);
   shared->event.signal();
 }
 
