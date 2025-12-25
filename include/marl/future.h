@@ -35,7 +35,7 @@ class Future {
  public:
   Future(const std::shared_ptr<PromiseShared<T>>& shared);
 
-  T get() const {
+  T& get() const {
     shared->event.wait();
     return shared->value;
   }
