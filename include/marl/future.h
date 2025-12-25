@@ -114,6 +114,8 @@ schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
 
   Promise<std::invoke_result_t<Function>> promise;
 
+  Future<std::invoke_result_t<Function>> future = promise.getFuture();
+
   scheduler->enqueue(Task(
       [promise = std::move(promise), f = std::forward<Function>(f),
        ... args = std::forward<Args>(args)]() mutable {
@@ -121,7 +123,7 @@ schedule_returns(Function&& f, Task::Attributes&& attributes, Args&&... args) {
       },
       std::move(attributes)));
 
-  return promise.getFuture();
+  return future;
 }
 
 // schedule_returns() schedules the function f to be asynchronously called using
@@ -136,13 +138,15 @@ inline Future<std::invoke_result_t<Function>> schedule_returns(
 
   Promise<std::invoke_result_t<Function>> promise;
 
+  Future<std::invoke_result_t<Function>> future = promise.getFuture();
+
   scheduler->enqueue(Task(
       [promise = std::move(promise), f = std::forward<Function>(f)]() mutable {
         promise.setValue(std::move(std::invoke(f)));
       },
       std::move(attributes)));
 
-  return promise.getFuture();
+  return future;
 }
 
 }  // namespace marl
