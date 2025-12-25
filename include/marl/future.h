@@ -35,12 +35,12 @@ class Future {
  public:
   Future(const std::shared_ptr<PromiseShared<T>>& shared);
 
-  T get() {
+  T get() const {
     shared->event.wait();
     return shared->value;
   }
 
-  T* poll() {
+  T* poll() const {
     if (shared->event.isSignalled()) {
       return &shared->value;
     }
