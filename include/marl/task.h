@@ -27,7 +27,7 @@ class TaskGroup;
 // Task is a unit of work for the scheduler.
 class Task {
  public:
-  using Function = std::function<void()>;
+  using Function = std::move_only_function<void()>;
 
   enum class Flags {
     None = 0,
@@ -45,13 +45,12 @@ class Task {
   };
 
   MARL_NO_EXPORT inline Task();
-  MARL_NO_EXPORT inline Task(const Task&);
+  MARL_NO_EXPORT Task(const Task&) = delete;
   MARL_NO_EXPORT inline Task(Task&&) noexcept;
-  MARL_NO_EXPORT inline Task(const Function& function, Attributes&& attributes = {});
+  MARL_NO_EXPORT Task(const Function& function, Attributes&& attributes = {}) = delete;
   MARL_NO_EXPORT inline Task(Function&& function, Attributes&& attributes = {});
-  MARL_NO_EXPORT inline Task& operator=(const Task&);
+  MARL_NO_EXPORT Task& operator=(const Task&) = delete;
   MARL_NO_EXPORT inline Task& operator=(Task&&) noexcept;
-  MARL_NO_EXPORT inline Task& operator=(const Function&);
   MARL_NO_EXPORT inline Task& operator=(Function&&) noexcept;
 
   // operator bool() returns true if the Task has a valid function.
@@ -72,24 +71,15 @@ class Task {
 };
 
 Task::Task() = default;
-Task::Task(const Task& o) = default;
 Task::Task(Task&& o) noexcept : function(std::move(o.function)), attributes(std::move(o.attributes)) {}
-Task::Task(const Function& function_, Attributes&& attributes_)
-    : function(function_), attributes(std::move(attributes_)) {}
 Task::Task(Function&& function_, Attributes&& attributes_)
     : function(std::move(function_)), attributes(std::move(attributes_)) {}
-Task& Task::operator=(const Task& o) = default;
 Task& Task::operator=(Task&& o) noexcept {
   function = std::move(o.function);
   attributes = std::move(o.attributes);
   return *this;
 }
 
-Task& Task::operator=(const Function& f) {
-  function = f;
-  attributes = {};
-  return *this;
-}
 Task& Task::operator=(Function&& f) noexcept {
   function = std::move(f);
   attributes = {};
@@ -97,10 +87,6 @@ Task& Task::operator=(Function&& f) noexcept {
 }
 Task::operator bool() const {
   return function.operator bool();
-}
-
-void Task::operator()() const {
-  function();
 }
 
 bool Task::is(Flags flag) const {
