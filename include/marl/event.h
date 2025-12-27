@@ -47,6 +47,8 @@ class Event {
   // No copying
   Event(const Event&) = delete;
   Event& operator=(const Event&) = delete;
+  Event(Event&&) noexcept = default;
+  Event& operator=(Event&&) noexcept = default;
 
   // signal() signals the event, possibly unblocking a call to wait().
   MARL_NO_EXPORT inline void signal() const;

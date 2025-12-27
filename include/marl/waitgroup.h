@@ -57,6 +57,8 @@ class WaitGroup {
   // No copying
   WaitGroup(const WaitGroup&) = delete;
   WaitGroup& operator=(const WaitGroup&) = delete;
+  WaitGroup(WaitGroup&&) noexcept = default;
+  WaitGroup& operator=(WaitGroup&&) noexcept = default;
 
   // add() increments the internal counter by count.
   MARL_NO_EXPORT inline void add(unsigned int count = 1) const;
