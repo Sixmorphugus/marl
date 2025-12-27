@@ -44,6 +44,10 @@ class Event {
                               bool initialState = false,
                               Allocator* allocator = Allocator::Default);
 
+  // No copying
+  Event(const Event&) = delete;
+  Event& operator=(const Event&) = delete;
+
   // signal() signals the event, possibly unblocking a call to wait().
   MARL_NO_EXPORT inline void signal() const;
 
@@ -125,7 +129,7 @@ class Event {
     bool signalled;
   };
 
-  const std::shared_ptr<Shared> shared;
+  std::shared_ptr<Shared> shared;
 };
 
 Event::Shared::Shared(Allocator* allocator, Mode mode_, bool initialState)

@@ -54,6 +54,10 @@ class WaitGroup {
   MARL_NO_EXPORT inline WaitGroup(unsigned int initialCount = 0,
                                   Allocator* allocator = Allocator::Default);
 
+  // No copying
+  WaitGroup(const WaitGroup&) = delete;
+  WaitGroup& operator=(const WaitGroup&) = delete;
+
   // add() increments the internal counter by count.
   MARL_NO_EXPORT inline void add(unsigned int count = 1) const;
 
@@ -72,7 +76,7 @@ class WaitGroup {
     ConditionVariable cv;
     marl::mutex mutex;
   };
-  const std::shared_ptr<Data> data;
+  std::shared_ptr<Data> data;
 };
 
 WaitGroup::Data::Data(Allocator* allocator) : cv(allocator) {}
